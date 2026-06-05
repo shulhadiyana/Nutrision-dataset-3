@@ -3,8 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import plotly.express as px
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -213,7 +212,7 @@ if predict_button:
         calorie_carb = carbohydrate * 4
         total_manual = calorie_proteins + calorie_fat + calorie_carb
         
-        # Data untuk visualisasi
+        # Data untuk visualisasi dengan matplotlib
         contribution_data = pd.DataFrame({
             'Makronutrien': ['Protein', 'Lemak', 'Karbohidrat'],
             'Kalori (kkal)': [calorie_proteins, calorie_fat, calorie_carb],
@@ -224,34 +223,38 @@ if predict_button:
             ]
         })
         
-        # Bar chart
+        # Bar chart dengan matplotlib
         col_chart1, col_chart2 = st.columns(2)
         
         with col_chart1:
-            fig_bar = px.bar(
-                contribution_data, 
-                x='Makronutrien', 
-                y='Kalori (kkal)',
-                color='Makronutrien',
-                title='Kontribusi Kalori per Makronutrien',
-                text='Kalori (kkal)',
-                color_discrete_sequence=['#4CAF50', '#FF9800', '#2196F3']
-            )
-            fig_bar.update_traces(textposition='outside')
-            fig_bar.update_layout(showlegend=False, height=400)
-            st.plotly_chart(fig_bar, use_container_width=True)
+            fig, ax = plt.subplots(figsize=(6, 4))
+            bars = ax.bar(contribution_data['Makronutrien'], contribution_data['Kalori (kkal)'], 
+                         color=['#4CAF50', '#FF9800', '#2196F3'])
+            ax.set_title('Kontribusi Kalori per Makronutrien')
+            ax.set_ylabel('Kalori (kkal)')
+            ax.set_xlabel('Makronutrien')
+            
+            # Tambahkan nilai di atas bar
+            for bar in bars:
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{int(height)} kkal',
+                        ha='center', va='bottom')
+            
+            st.pyplot(fig)
+            plt.close()
         
         with col_chart2:
-            fig_pie = px.pie(
-                contribution_data,
-                values='Kalori (kkal)',
-                names='Makronutrien',
-                title='Persentase Kontribusi Kalori',
-                color_discrete_sequence=['#4CAF50', '#FF9800', '#2196F3']
-            )
-            fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-            fig_pie.update_layout(height=400)
-            st.plotly_chart(fig_pie, use_container_width=True)
+            fig, ax = plt.subplots(figsize=(6, 4))
+            colors = ['#4CAF50', '#FF9800', '#2196F3']
+            wedges, texts, autotexts = ax.pie(contribution_data['Kalori (kkal)'], 
+                                                labels=contribution_data['Makronutrien'],
+                                                autopct='%1.1f%%',
+                                                colors=colors,
+                                                startangle=90)
+            ax.set_title('Persentase Kontribusi Kalori')
+            st.pyplot(fig)
+            plt.close()
         
         # Metrik tambahan
         st.markdown("---")
@@ -303,18 +306,21 @@ if predict_button:
             'Kalori (kkal)': [total_manual, prediction]
         })
         
-        fig_compare = px.bar(
-            comparison_df,
-            x='Metode',
-            y='Kalori (kkal)',
-            color='Metode',
-            title='Perbandingan Hasil',
-            text='Kalori (kkal)',
-            color_discrete_sequence=['#607D8B', '#9C27B0']
-        )
-        fig_compare.update_traces(textposition='outside')
-        fig_compare.update_layout(showlegend=False, height=400)
-        st.plotly_chart(fig_compare, use_container_width=True)
+        fig, ax = plt.subplots(figsize=(8, 5))
+        bars = ax.bar(comparison_df['Metode'], comparison_df['Kalori (kkal)'], 
+                     color=['#607D8B', '#9C27B0'])
+        ax.set_title('Perbandingan Hasil')
+        ax.set_ylabel('Kalori (kkal)')
+        ax.set_xlabel('Metode')
+        
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                   f'{int(height)} kkal',
+                   ha='center', va='bottom')
+        
+        st.pyplot(fig)
+        plt.close()
         
         # Selisih
         diff = abs(prediction - total_manual)
